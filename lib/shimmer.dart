@@ -47,6 +47,8 @@ enum ShimmerDirection { ltr, rtl, ttb, btt }
 /// [enabled] controls if shimmer effect is active. When set to false the animation
 /// is paused
 ///
+/// [hideWhenDisabled] hide the shimmer effect when shimmer effect is paused
+///
 ///
 /// ## Pro tips:
 ///
@@ -63,6 +65,7 @@ class Shimmer extends StatefulWidget {
   final Gradient gradient;
   final int loop;
   final bool enabled;
+  final bool hideWhenDisabled;
 
   const Shimmer({
     Key? key,
@@ -72,6 +75,7 @@ class Shimmer extends StatefulWidget {
     this.period = const Duration(milliseconds: 1500),
     this.loop = 0,
     this.enabled = true,
+    this.hideWhenDisabled = false,
   }) : super(key: key);
 
   ///
@@ -88,6 +92,7 @@ class Shimmer extends StatefulWidget {
     this.direction = ShimmerDirection.ltr,
     this.loop = 0,
     this.enabled = true,
+    this.hideWhenDisabled = false,
   })  : gradient = LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.centerRight,
@@ -120,7 +125,6 @@ class Shimmer extends StatefulWidget {
         DiagnosticsProperty<Duration>('period', period, defaultValue: null));
     properties
         .add(DiagnosticsProperty<bool>('enabled', enabled, defaultValue: null));
-    properties.add(DiagnosticsProperty<int>('loop', loop, defaultValue: 0));
   }
 }
 
@@ -160,16 +164,18 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      child: widget.child,
-      builder: (BuildContext context, Widget? child) => _Shimmer(
-        child: child,
-        direction: widget.direction,
-        gradient: widget.gradient,
-        percent: _controller.value,
-      ),
-    );
+    return widget.hideWhenDisabled && !widget.enabled
+        ? widget.child
+        : AnimatedBuilder(
+            animation: _controller,
+            child: widget.child,
+            builder: (BuildContext context, Widget? child) => _Shimmer(
+              child: child,
+              direction: widget.direction,
+              gradient: widget.gradient,
+              percent: _controller.value,
+            ),
+          );
   }
 
   @override
