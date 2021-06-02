@@ -35,6 +35,7 @@ enum ShimmerDirection { ltr, rtl, ttb, btt }
 ///
 /// [period] controls the speed of shimmer effect. The default value is 1500
 /// milliseconds.
+/// This property is only used when [shimmerController] is null.
 ///
 /// [direction] controls the direction of shimmer effect. The default value
 /// is [ShimmerDirection.ltr].
@@ -43,10 +44,14 @@ enum ShimmerDirection { ltr, rtl, ttb, btt }
 ///
 /// [loop] the number of animation loop, set value of `0` to make animation run
 /// forever.
+/// This property is only used when [shimmerController] is null.
 ///
 /// [enabled] controls if shimmer effect is active. When set to false the animation
-/// is paused
+/// is paused.
+/// Should not be used with [shimmerController].
 ///
+/// [shimmerController] AnimationController for Shimmer animation, use this when
+/// you want to synchronise multiples Shimmer Widgets
 ///
 /// ## Pro tips:
 ///
@@ -58,21 +63,32 @@ enum ShimmerDirection { ltr, rtl, ttb, btt }
 @immutable
 class Shimmer extends StatefulWidget {
   final Widget child;
-  final Duration period;
+  final Duration? period;
   final ShimmerDirection direction;
   final Gradient gradient;
-  final int loop;
-  final bool enabled;
+  final int? loop;
+  final bool? enabled;
+  final ShimmerController? shimmerController;
 
   const Shimmer({
     Key? key,
     required this.child,
     required this.gradient,
     this.direction = ShimmerDirection.ltr,
-    this.period = const Duration(milliseconds: 1500),
-    this.loop = 0,
-    this.enabled = true,
-  }) : super(key: key);
+    this.period,
+    this.loop,
+    this.enabled,
+    this.shimmerController,
+  })  : assert(
+            shimmerController == null || (period == null && loop == null),
+            '[ShimmerController] override values of [period],'
+            ' [loop] and [enabled] parameters'),
+        assert(
+            shimmerController == null || enabled == null,
+            'If you change value [enabled] of one [Shimmer],'
+            ' this will stop all [Shimmer]s using this [ShimmerController],'
+            ' prefer using [shimmerController.stop()] and [shimmerController.forward()] methods'),
+        super(key: key);
 
   ///
   /// A convenient constructor provides an easy and convenient way to create a
@@ -84,10 +100,11 @@ class Shimmer extends StatefulWidget {
     required this.child,
     required Color baseColor,
     required Color highlightColor,
-    this.period = const Duration(milliseconds: 1500),
     this.direction = ShimmerDirection.ltr,
-    this.loop = 0,
-    this.enabled = true,
+    this.period,
+    this.loop,
+    this.enabled,
+    this.shimmerController,
   })  : gradient = LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.centerRight,
@@ -105,6 +122,15 @@ class Shimmer extends StatefulWidget {
               0.65,
               1.0
             ]),
+        assert(
+            shimmerController == null || (period == null && loop == null),
+            '[ShimmerController] override values of [period],'
+            ' [loop] and [enabled] parameters'),
+        assert(
+            shimmerController == null || enabled == null,
+            'If you change value [enabled] of one [Shimmer],'
+            ' this will stop all [Shimmer]s using this [ShimmerController],'
+            ' prefer using [shimmerController.stop()] and [shimmerController.forward()] methods'),
         super(key: key);
 
   @override
@@ -120,40 +146,49 @@ class Shimmer extends StatefulWidget {
         DiagnosticsProperty<Duration>('period', period, defaultValue: null));
     properties
         .add(DiagnosticsProperty<bool>('enabled', enabled, defaultValue: null));
-    properties.add(DiagnosticsProperty<int>('loop', loop, defaultValue: 0));
+    properties.add(DiagnosticsProperty<int>('loop', loop, defaultValue: null));
+    properties.add(DiagnosticsProperty<ShimmerController>(
+        'shimmerController', shimmerController,
+        defaultValue: null));
   }
 }
 
 class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+  late final int _loop = widget.shimmerController?.loop ?? widget.loop ?? 0;
+  late final Duration _period =
+      widget.period ?? const Duration(milliseconds: 1500);
+  late bool _enabled = widget.enabled ?? true;
+  late final AnimationController _controller = widget.shimmerController ??
+      AnimationController(vsync: this, duration: _period);
   int _count = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: widget.period)
-      ..addStatusListener((AnimationStatus status) {
-        if (status != AnimationStatus.completed) {
-          return;
-        }
+    _controller.addStatusListener((AnimationStatus status) {
+      if (status == AnimationStatus.completed) {
         _count++;
-        if (widget.loop <= 0) {
+        if (_loop <= 0) {
           _controller.repeat();
-        } else if (_count < widget.loop) {
+        } else if (_count < _loop) {
           _controller.forward(from: 0.0);
         }
-      });
-    if (widget.enabled) {
+      }
+    });
+    if (_enabled) {
       _controller.forward();
     }
   }
 
   @override
   void didUpdateWidget(Shimmer oldWidget) {
-    if (widget.enabled) {
-      _controller.forward();
-    } else {
-      _controller.stop();
+    if (widget.enabled != oldWidget.enabled) {
+      _enabled = widget.enabled ?? true;
+      if (_enabled) {
+        _controller.forward();
+      } else {
+        _controller.stop();
+      }
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -174,7 +209,11 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (widget.shimmerController != null)
+      widget.shimmerController!.disposeShimmer();
+    else
+      _controller.dispose();
+
     super.dispose();
   }
 }
@@ -202,6 +241,32 @@ class _Shimmer extends SingleChildRenderObjectWidget {
     shimmer.percent = percent;
     shimmer.gradient = gradient;
     shimmer.direction = direction;
+  }
+}
+
+///
+/// [loop] the number of animation loop, set value of `0` to make animation run
+/// forever.
+///
+/// [period] controls the speed of shimmer effect. The default value is 1500
+/// milliseconds.
+///
+class ShimmerController extends AnimationController {
+  ShimmerController({
+    required TickerProvider vsync,
+    this.loop = 0,
+    this.period = const Duration(milliseconds: 1500),
+  }) : super(vsync: vsync, duration: period);
+
+  final int loop;
+  final Duration period;
+
+  bool _isDisposed = false;
+  void disposeShimmer() {
+    if(!_isDisposed){
+      _isDisposed = true;
+      dispose();
+    }
   }
 }
 

@@ -11,6 +11,7 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         'loading': (_) => LoadingListPage(),
         'slide': (_) => SlideToUnlockPage(),
+        'loadingWithController': (_) => LoadingListPageWithShimmerController(),
       },
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -41,7 +42,12 @@ class _MyHomePageState extends State<MyHomePage> {
           ListTile(
             title: const Text('Slide To Unlock'),
             onTap: () => Navigator.of(context).pushNamed('slide'),
-          )
+          ),
+          ListTile(
+            title: const Text('Loading List With ShimmerController'),
+            onTap: () =>
+                Navigator.of(context).pushNamed('loadingWithController'),
+          ),
         ],
       ),
     );
@@ -74,50 +80,8 @@ class _LoadingListPageState extends State<LoadingListPage> {
                 highlightColor: Colors.grey.shade100,
                 enabled: _enabled,
                 child: ListView.builder(
-                  itemBuilder: (_, __) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Container(
-                          width: 48.0,
-                          height: 48.0,
-                          color: Colors.white,
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Container(
-                                width: double.infinity,
-                                height: 8.0,
-                                color: Colors.white,
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 2.0),
-                              ),
-                              Container(
-                                width: double.infinity,
-                                height: 8.0,
-                                color: Colors.white,
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 2.0),
-                              ),
-                              Container(
-                                width: 40.0,
-                                height: 8.0,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  itemBuilder: (_, __) => const ListElement(),
                   itemCount: 6,
                 ),
               ),
@@ -245,6 +209,152 @@ class SlideToUnlockPage extends StatelessWidget {
                   ),
                 ),
               ))
+        ],
+      ),
+    );
+  }
+}
+
+class LoadingListPageWithShimmerController extends StatefulWidget {
+  @override
+  _LoadingListPageWithShimmerControllerState createState() =>
+      _LoadingListPageWithShimmerControllerState();
+}
+
+class _LoadingListPageWithShimmerControllerState
+    extends State<LoadingListPageWithShimmerController>
+    with SingleTickerProviderStateMixin {
+  bool _enabled = true;
+  late final ShimmerController _shimmerController =
+      ShimmerController(vsync: this);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Loading List with ShimmerController'),
+      ),
+      body: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: <Widget>[
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                children: <Widget>[
+                  const NotAnimatedLabel(child: ListElement()),
+                  Shimmer.fromColors(
+                    shimmerController: _shimmerController,
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: const ListElement(),
+                  ),
+                  const NotAnimatedLabel(child: ListElement()),
+                  Shimmer.fromColors(
+                    shimmerController: _shimmerController,
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: const ListElement(),
+                  ),
+                  Shimmer.fromColors(
+                    shimmerController: _shimmerController,
+                    baseColor: Colors.grey.shade300,
+                    highlightColor: Colors.grey.shade100,
+                    child: const ListElement(),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: TextButton(
+                  onPressed: () {
+                    if (_enabled)
+                      _shimmerController.stop();
+                    else
+                      _shimmerController.forward();
+                    setState(() => _enabled = _shimmerController.isAnimating);
+                  },
+                  child: Text(
+                    _enabled ? 'Stop' : 'Play',
+                    style: Theme.of(context).textTheme.button?.copyWith(
+                        fontSize: 18.0,
+                        color: _enabled ? Colors.redAccent : Colors.green),
+                  )),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NotAnimatedLabel extends StatelessWidget {
+  const NotAnimatedLabel({required this.child});
+
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        child,
+        const Center(
+          child: Text('Not animated'),
+        )
+      ],
+    );
+  }
+}
+
+
+class ListElement extends StatelessWidget {
+  const ListElement();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            width: 48.0,
+            height: 48.0,
+            color: Colors.grey.shade300,
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  width: double.infinity,
+                  height: 8.0,
+                  color: Colors.grey.shade300,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 2.0),
+                ),
+                Container(
+                  width: double.infinity,
+                  height: 8.0,
+                  color: Colors.grey.shade300,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 2.0),
+                ),
+                Container(
+                  width: 40.0,
+                  height: 8.0,
+                  color: Colors.grey.shade300,
+                ),
+              ],
+            ),
+          )
         ],
       ),
     );

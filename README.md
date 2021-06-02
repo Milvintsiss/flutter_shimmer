@@ -36,3 +36,7 @@ SizedBox(
 );
 
 ```
+
+## Have multiple synchronised Shimmers
+
+If you want to use multiple Shimmers use ShimmerController, more in example.
