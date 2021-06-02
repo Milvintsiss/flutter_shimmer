@@ -70,8 +70,8 @@ class _LoadingListPageState extends State<LoadingListPage> {
           children: <Widget>[
             Expanded(
               child: Shimmer.fromColors(
-                baseColor: Colors.grey[300],
-                highlightColor: Colors.grey[100],
+                baseColor: Colors.grey.shade300,
+                highlightColor: Colors.grey.shade100,
                 enabled: _enabled,
                 child: ListView.builder(
                   itemBuilder: (_, __) => Padding(
@@ -124,7 +124,7 @@ class _LoadingListPageState extends State<LoadingListPage> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: FlatButton(
+              child: TextButton(
                   onPressed: () {
                     setState(() {
                       _enabled = !_enabled;
@@ -132,7 +132,7 @@ class _LoadingListPageState extends State<LoadingListPage> {
                   },
                   child: Text(
                     _enabled ? 'Stop' : 'Play',
-                    style: Theme.of(context).textTheme.button.copyWith(
+                    style: Theme.of(context).textTheme.button?.copyWith(
                         fontSize: 18.0,
                         color: _enabled ? Colors.redAccent : Colors.green),
                   )),
