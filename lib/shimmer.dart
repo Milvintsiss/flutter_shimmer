@@ -53,6 +53,9 @@ enum ShimmerDirection { ltr, rtl, ttb, btt }
 /// [shimmerController] AnimationController for Shimmer animation, use this when
 /// you want to synchronise multiples Shimmer Widgets
 ///
+/// [hideWhenDisabled] hide the shimmer effect when shimmer effect is paused
+///
+///
 /// ## Pro tips:
 ///
 /// * [child] should be made of basic and simple [Widget]s, such as [Container],
@@ -69,6 +72,7 @@ class Shimmer extends StatefulWidget {
   final int? loop;
   final bool? enabled;
   final ShimmerController? shimmerController;
+  final bool hideWhenDisabled;
 
   const Shimmer({
     Key? key,
@@ -79,6 +83,7 @@ class Shimmer extends StatefulWidget {
     this.loop,
     this.enabled,
     this.shimmerController,
+    this.hideWhenDisabled = false,
   })  : assert(
             shimmerController == null || (period == null && loop == null),
             '[ShimmerController] override values of [period],'
@@ -105,6 +110,7 @@ class Shimmer extends StatefulWidget {
     this.loop,
     this.enabled,
     this.shimmerController,
+    this.hideWhenDisabled = false,
   })  : gradient = LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.centerRight,
@@ -150,6 +156,9 @@ class Shimmer extends StatefulWidget {
     properties.add(DiagnosticsProperty<ShimmerController>(
         'shimmerController', shimmerController,
         defaultValue: null));
+    properties.add(DiagnosticsProperty<bool>(
+        'hideWhenDisabled', hideWhenDisabled,
+        defaultValue: false));
   }
 }
 
@@ -195,16 +204,18 @@ class _ShimmerState extends State<Shimmer> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      child: widget.child,
-      builder: (BuildContext context, Widget? child) => _Shimmer(
-        child: child,
-        direction: widget.direction,
-        gradient: widget.gradient,
-        percent: _controller.value,
-      ),
-    );
+    return widget.hideWhenDisabled && !_controller.isAnimating
+        ? widget.child
+        : AnimatedBuilder(
+            animation: _controller,
+            child: widget.child,
+            builder: (BuildContext context, Widget? child) => _Shimmer(
+              child: child,
+              direction: widget.direction,
+              gradient: widget.gradient,
+              percent: _controller.value,
+            ),
+          );
   }
 
   @override
