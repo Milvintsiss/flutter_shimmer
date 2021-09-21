@@ -244,20 +244,17 @@ class _LoadingListPageWithShimmerControllerState
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 8.0),
                 children: <Widget>[
-                  const NotAnimatedLabel(child: ListElement()),
+                  const WithLabel(label: 'Not animated', child: ListElement()),
                   Shimmer.fromColors(
                     shimmerController: _shimmerController,
                     baseColor: Colors.grey.shade300,
                     highlightColor: Colors.grey.shade100,
-                    child: const ListElement(),
+                    hideWhenDisabled: true,
+                    child: const WithLabel(
+                        label: 'show child when stopped',
+                        child: ListElement()),
                   ),
-                  const NotAnimatedLabel(child: ListElement()),
-                  Shimmer.fromColors(
-                    shimmerController: _shimmerController,
-                    baseColor: Colors.grey.shade300,
-                    highlightColor: Colors.grey.shade100,
-                    child: const ListElement(),
-                  ),
+                  const WithLabel(label: 'Not animated', child: ListElement()),
                   Shimmer.fromColors(
                     shimmerController: _shimmerController,
                     baseColor: Colors.grey.shade300,
@@ -291,23 +288,24 @@ class _LoadingListPageWithShimmerControllerState
   }
 }
 
-class NotAnimatedLabel extends StatelessWidget {
-  const NotAnimatedLabel({required this.child});
+class WithLabel extends StatelessWidget {
+  const WithLabel({required this.child, required this.label});
 
+  final String label;
   final Widget child;
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
         child,
-        const Center(
-          child: Text('Not animated'),
+        Center(
+          child: Text(label),
         )
       ],
     );
   }
 }
-
 
 class ListElement extends StatelessWidget {
   const ListElement();
@@ -322,7 +320,7 @@ class ListElement extends StatelessWidget {
           Container(
             width: 48.0,
             height: 48.0,
-            color: Colors.grey.shade300,
+            color: Colors.black45,
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
@@ -334,7 +332,7 @@ class ListElement extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   height: 8.0,
-                  color: Colors.grey.shade300,
+                  color: Colors.black45,
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 2.0),
@@ -342,7 +340,7 @@ class ListElement extends StatelessWidget {
                 Container(
                   width: double.infinity,
                   height: 8.0,
-                  color: Colors.grey.shade300,
+                  color: Colors.black45,
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 2.0),
@@ -350,7 +348,7 @@ class ListElement extends StatelessWidget {
                 Container(
                   width: 40.0,
                   height: 8.0,
-                  color: Colors.grey.shade300,
+                  color: Colors.black45,
                 ),
               ],
             ),
